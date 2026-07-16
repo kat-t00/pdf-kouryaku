@@ -37,11 +37,43 @@ body {
   box-shadow: var(--shadow-soft);
 }
 
+.app-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 6px;
+}
+
 .app-header h1 {
-  margin: 0 0 10px;
+  margin: 0;
   font-size: 18px;
   color: #fff;
   text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.app-credit {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex: 0 0 auto;
+  font-size: 12px;
+  font-weight: bold;
+  color: #ffffff;
+  background: rgba(255, 255, 255, 0.2);
+  border-radius: 999px;
+  padding: 5px 12px;
+  text-decoration: none;
+  white-space: nowrap;
+}
+
+.app-credit:hover {
+  background: rgba(255, 255, 255, 0.32);
+}
+
+.app-credit svg {
+  fill: #ffffff;
 }
 
 .mode-tabs {
