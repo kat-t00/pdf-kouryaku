@@ -121,6 +121,45 @@ const Editor = (() => {
     }
   }
 
+  // 「🆕 新規作成」：読み込んだPDF・作業中の項目・下書きをクリアし、初回起動時と同じ空の状態に戻す。
+  // 一度PDFを読み込むと、リロードしても下書き復元でずっとそのPDFが開いた状態になってしまうため、
+  // ユーザーが意図的に空の状態へ戻れる手段として追加した
+  function resetEditor() {
+    if (isDirty && !confirm('保存されていない変更が失われます。新規作成してよろしいですか？')) return;
+    clearTimeout(draftSaveTimer);
+    DraftStore.clear();
+
+    pdfDoc = null;
+    originalArrayBuffer = null;
+    pageNumber = 1;
+    pageCount = 1;
+    pagesData = [];
+    editingTemplateId = null;
+    pendingCopySourceId = null;
+    isDirty = false;
+    clipboardField = null;
+    undoStack = [];
+    redoStack = [];
+    updateUndoRedoButtons();
+    selectField(null);
+    closeFieldEditor();
+
+    fileInput.value = '';
+    fileNameLabel.textContent = '';
+    nameInput.value = '';
+    saveBtn.disabled = true;
+    pageNav.classList.add('hidden');
+
+    canvas.getContext('2d').clearRect(0, 0, canvas.width, canvas.height);
+    canvas.width = 0;
+    canvas.height = 0;
+    overlay.innerHTML = '';
+    fieldListEl.innerHTML = '';
+    fieldEmptyEl.classList.remove('hidden');
+
+    showStatus('新規作成しました');
+  }
+
   async function loadFromFile(file) {
     const buf = await file.arrayBuffer();
     originalArrayBuffer = buf;
@@ -1071,6 +1110,9 @@ const Editor = (() => {
     await loadFromFile(file);
     if (copySourceId) applyCopiedFields(copySourceId);
   });
+
+  const newBtn = document.getElementById('editorNewBtn');
+  newBtn.addEventListener('click', resetEditor);
 
   // 別の自治体の似た様式を作る時、既存テンプレートの項目定義（種類・ラベル・文字サイズ・座標）を
   // 新しいPDFにそのままコピーする。多くの様式は項目の並びが似ているため、位置調整だけで済むことが多い
