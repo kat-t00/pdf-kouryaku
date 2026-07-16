@@ -1,0 +1,1093 @@
+/* ポップで視認性の良いデザイン（丸ゴシック・グリーン系パステル・角丸） */
+
+:root {
+  --color-bg: #f2f9f4;
+  --color-header-start: #7bd8a0;
+  --color-header-end: #5cb8d6;
+  --color-primary: #2fb380;
+  --color-primary-dark: #1f8f65;
+  --color-secondary: #ffb84c;
+  --color-secondary-dark: #e69b2e;
+  --color-danger: #ff6b6b;
+  --color-card: #ffffff;
+  --color-border: #d7ecdf;
+  --color-text: #2f3b52;
+  --shadow-soft: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+body {
+  margin: 0;
+  font-family: -apple-system, "Hiragino Maru Gothic ProN", "Yu Gothic", "Hiragino Kaku Gothic ProN", sans-serif;
+  background: var(--color-bg);
+  color: var(--color-text);
+}
+
+.hidden {
+  display: none !important;
+}
+
+/* ヘッダー */
+.app-header {
+  background: linear-gradient(135deg, var(--color-header-start), var(--color-header-end));
+  padding: 14px 20px;
+  box-shadow: var(--shadow-soft);
+}
+
+.app-header h1 {
+  margin: 0 0 10px;
+  font-size: 18px;
+  color: #fff;
+  text-shadow: 0 1px 2px rgba(0, 0, 0, 0.15);
+}
+
+.mode-tabs {
+  display: flex;
+  gap: 8px;
+}
+
+.mode-tab {
+  padding: 8px 16px;
+  border: none;
+  border-radius: 999px;
+  background: rgba(255, 255, 255, 0.5);
+  color: #fff;
+  font-weight: bold;
+  font-size: 14px;
+  cursor: pointer;
+  transition: background 0.15s;
+}
+
+.mode-tab.active {
+  background: #fff;
+  color: var(--color-primary-dark);
+}
+
+/* ヘルプボタンはタブ切り替えの一員ではないので、右端に少し離して視覚的に区別する */
+.mode-tab-guide {
+  margin-left: auto;
+  background: rgba(255, 255, 255, 0.25);
+}
+
+.usage-guide-list {
+  margin: 0;
+  padding-left: 20px;
+  font-size: 13px;
+  line-height: 1.7;
+  color: var(--color-text);
+}
+
+.usage-guide-list li {
+  margin-bottom: 10px;
+}
+
+/* 全体レイアウト */
+.app-body {
+  display: flex;
+  gap: 16px;
+  padding: 16px;
+  max-width: 1400px;
+  margin: 0 auto;
+}
+
+/* 各モードのセクション自体をflexにしないと、main-panelとside-panelが横並びにならず
+   side-panel（項目一覧・保存済みテンプレートなど）がPDFの下に積み重なってしまう
+   （これが「テンプレが一番下にあって使いにくい」「ポップアップが様式と重なる」の根本原因だった） */
+.mode-section {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+  min-width: 0;
+}
+
+.panel {
+  background: var(--color-card);
+  border-radius: 16px;
+  box-shadow: var(--shadow-soft);
+  padding: 16px;
+}
+
+.main-panel {
+  flex: 1 1 480px;
+  min-width: 0;
+}
+
+.side-panel {
+  flex: 0 0 300px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.panel h2 {
+  font-size: 15px;
+  margin: 0 0 10px;
+  color: var(--color-primary-dark);
+}
+
+.hint {
+  font-size: 13px;
+  color: #6b7a90;
+  background: #f6faf7;
+  border: 1px dashed var(--color-border);
+  border-radius: 10px;
+  padding: 8px 12px;
+  margin-bottom: 12px;
+  line-height: 1.5;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+}
+
+input[type="text"], input[type="file"], select {
+  border: 1px solid var(--color-border);
+  border-radius: 10px;
+  padding: 7px 10px;
+  font-size: 14px;
+  font-family: inherit;
+  background: #fff;
+}
+
+button, label.btn-outline {
+  border: none;
+  border-radius: 999px;
+  padding: 8px 16px;
+  font-size: 14px;
+  font-weight: bold;
+  cursor: pointer;
+  font-family: inherit;
+  display: inline-block;
+  transition: transform 0.1s, opacity 0.15s;
+}
+
+button:active {
+  transform: scale(0.97);
+}
+
+button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.btn-primary {
+  background: var(--color-primary);
+  color: #fff;
+}
+
+.btn-primary:hover:not(:disabled) {
+  background: var(--color-primary-dark);
+}
+
+.btn-secondary {
+  background: var(--color-secondary);
+  color: #fff;
+}
+
+.btn-secondary:hover:not(:disabled) {
+  background: var(--color-secondary-dark);
+}
+
+.btn-outline {
+  background: #fff;
+  color: var(--color-primary-dark);
+  border: 1px solid var(--color-primary);
+}
+
+.btn-danger {
+  background: #fff;
+  color: var(--color-danger);
+  border: 1px solid var(--color-danger);
+  padding: 4px 10px;
+  font-size: 12px;
+}
+
+.page-nav {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 12px;
+  font-size: 14px;
+}
+
+/* PDF表示エリア。高さを固定にしておくことで、中身が空でも表示エリアの実寸が確定し、
+   「全体表示」ボタンのfit計算（表示エリアの大きさ ÷ 様式の実寸）が最初から正しく行える */
+.pdf-stage-wrap {
+  overflow: auto;
+  height: 75vh;
+  border: 1px solid var(--color-border);
+  border-radius: 12px;
+  background: #eef3ee;
+  padding: 12px;
+}
+
+/* ズームツールバー：段階的な＋／－ボタンと「全体表示」ボタン。
+   感覚的な連続ズーム（ピンチ操作等）よりシンプルで壊れにくいことを優先している */
+.zoom-toolbar {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.zoom-toolbar button {
+  padding: 6px 12px;
+}
+
+.zoom-toolbar .zoom-label {
+  font-size: 13px;
+  color: #6b7a90;
+  min-width: 56px;
+  text-align: center;
+}
+
+.pdf-stage {
+  position: relative;
+  display: inline-block;
+  background: #fff;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.15);
+}
+
+.pdf-stage canvas {
+  display: block;
+}
+
+.field-overlay {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  cursor: crosshair;
+}
+
+/* テンプレ作成モード：ドラッグで範囲指定した項目ボックス */
+.field-drag {
+  position: absolute;
+  border: 2px dashed var(--color-primary);
+  background: rgba(47, 179, 128, 0.12);
+  pointer-events: none;
+}
+
+.field-box {
+  position: absolute;
+  background: rgba(47, 179, 128, 0.12);
+  border: 1.5px solid var(--color-primary);
+  border-radius: 4px;
+  cursor: move;
+  box-sizing: border-box;
+  z-index: 1;
+}
+
+.field-box.checkbox {
+  background: rgba(255, 184, 76, 0.18);
+  border-color: var(--color-secondary-dark);
+}
+
+.field-box.circle {
+  border-radius: 50%;
+  background: rgba(255, 107, 107, 0.1);
+  border-color: var(--color-danger);
+}
+
+.field-box.boxed {
+  background: rgba(93, 139, 244, 0.1);
+  border-color: #5d8bf4;
+}
+
+/* 項目一覧クリックでジャンプしてきた時、一瞬点滅させて「ここにありますよ」を示す */
+@keyframes field-box-flash {
+  0%, 100% { box-shadow: 0 0 0 0 rgba(255, 184, 76, 0); }
+  20%, 60% { box-shadow: 0 0 0 6px rgba(255, 184, 76, 0.7); }
+  40%, 80% { box-shadow: 0 0 0 2px rgba(255, 184, 76, 0.3); }
+}
+
+.field-box-flash {
+  animation: field-box-flash 1.2s ease-in-out;
+}
+
+/* 項目をドラッグ中、他の項目の端・中央と揃った時だけ出る目印の細い線（Canva等のスマートガイド） */
+.align-guide {
+  position: absolute;
+  display: none;
+  background: #ff3b8d;
+  pointer-events: none;
+  z-index: 50;
+}
+
+.align-guide-v {
+  top: 0;
+  bottom: 0;
+  width: 1px;
+}
+
+.align-guide-h {
+  left: 0;
+  right: 0;
+  height: 1px;
+}
+
+/* 複製・削除ボタンは枠の「真上」に完全にはみ出す形でまとめて置く。
+   チェック・丸囲みは印刷物の実サイズに合わせて小さく作ることが多く、
+   角に重ねる置き方だと枠本体を覆ってしまい「クリックしたら削除ボタンに当たって消えた」
+   という事故が起きるため、枠の大きさに関わらず本体には一切かからないようにしている。
+   項目名の白塗りラベルは密集した申請書で隣の項目と干渉するため廃止し、ホバー時のtitleツールチップのみにした。
+   ボタン2つ分だけの幅（fit-content）にすることで、以前の全幅ラベルより干渉しにくくしている。
+   さらに、常時表示だと項目が密集した申請書で隣の項目と重なって邪魔になるため、
+   クリックして選択中(.selected)の項目だけ表示するようにしている */
+.field-box .box-toolbar {
+  display: none;
+  position: absolute;
+  top: -20px;
+  left: 0;
+  width: fit-content;
+  height: 18px;
+  align-items: center;
+  gap: 3px;
+}
+
+.field-box.selected .box-toolbar {
+  display: flex;
+}
+
+.field-box.selected {
+  box-shadow: 0 0 0 2px rgba(47, 179, 128, 0.5);
+  /* 項目が接近していると、選択中の項目のツールバー（枠の真上にはみ出す）が隣の項目の枠と
+     重なることがある。DOM順（＝作成順）によっては隣の項目が上に描画されてクリックを奪って
+     しまうため、選択中は必ず最前面に来るようz-indexを引き上げる */
+  z-index: 20;
+}
+
+.field-box .box-del,
+.field-box .box-dup {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.field-box .box-del {
+  background: var(--color-danger);
+}
+
+.field-box .box-dup {
+  background: var(--color-primary-dark);
+}
+
+.field-box .box-resize {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--color-primary-dark);
+  cursor: nwse-resize;
+}
+
+/* テンプレ作成モード：確定前のライブプレビュー（実際のフォントサイズ・文字間隔を見せる） */
+.field-preview {
+  position: absolute;
+  pointer-events: none;
+  border: 1.5px dashed var(--color-primary-dark);
+  box-sizing: border-box;
+  display: flex;
+  align-items: flex-end;
+  overflow: hidden;
+}
+
+.field-preview.checkbox,
+.field-preview.circle {
+  align-items: center;
+  justify-content: center;
+}
+
+.field-preview.circle {
+  border-radius: 50%;
+}
+
+.field-preview.multiline {
+  align-items: flex-start;
+  white-space: normal;
+}
+
+.field-preview.multiline .preview-text {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+.field-preview .preview-text {
+  color: #1f4b8f;
+  line-height: 1.3;
+  white-space: nowrap;
+}
+
+.field-preview .preview-cell {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  border-right: 1px dashed #9fb8ee;
+  display: flex;
+  align-items: flex-end;
+  justify-content: center;
+}
+
+.field-preview .preview-cell .preview-text {
+  width: 100%;
+  text-align: center;
+}
+
+.modal-box #modalTextExtra,
+.modal-box #modalCircleExtra,
+.modal-box #fieldFontSizeRow,
+.modal-box #fieldCellCountRow {
+  margin-top: 4px;
+}
+
+.modal-box .modal-row-inline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.modal-box .modal-row-inline input[type="range"] {
+  flex: 1;
+}
+
+.modal-box .modal-row-inline .modal-row-value {
+  font-size: 12px;
+  color: #6b7a90;
+  width: 34px;
+  text-align: right;
+}
+
+.field-marker .marker-label {
+  font-size: 11px;
+  color: var(--color-primary-dark);
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  pointer-events: none;
+}
+
+.field-marker .marker-del {
+  position: absolute;
+  top: -9px;
+  right: -9px;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 11px;
+  line-height: 18px;
+  text-align: center;
+  cursor: pointer;
+  pointer-events: auto;
+}
+
+/* 修正モード：ドラッグ範囲・白抜きボックス */
+.correction-drag {
+  position: absolute;
+  border: 2px dashed var(--color-primary);
+  background: rgba(47, 179, 128, 0.12);
+  pointer-events: none;
+}
+
+.correction-box {
+  position: absolute;
+  background: #fff;
+  border: 1.5px dashed var(--color-danger);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: move;
+  box-sizing: border-box;
+  z-index: 1;
+  /* overflow:hiddenは付けない：付けると枠の真上(-20px)にはみ出して置いている複製・削除ボタンまで
+     一緒に切り取られてしまい、見た目には出ているのにクリックできない不具合になる
+     （テンプレ作成モードの.field-boxと同じ理由で、はみ出す表示を許容する必要がある） */
+}
+
+/* チェック・丸囲みはPDF出力で白抜きしない（既に印刷された枠線・選択肢を隠さない）ため、
+   画面上の見た目もそれに合わせて半透明にする。不透明な白（テキストタイプの既定）のままだと、
+   実際には消えないはずの印刷済み内容が画面上だけ隠れて見えてしまい、実物と食い違ってしまうため */
+.correction-box.mark-type {
+  background: rgba(255, 255, 255, 0.35);
+}
+
+.correction-box.mark-circle {
+  border-radius: 50%;
+}
+
+/* チェックはOFF時に✓が消えるので分かるが、丸囲みは枠自体が常に同じ見た目のため、
+   OFFにしたことが画面上で分からなくなってしまう。全体を薄くしてON/OFFが一目で分かるようにする */
+.correction-box.mark-off {
+  opacity: 0.4;
+}
+
+/* チェック・丸囲みのマークは入力・出力モードの.fill-mark-toggleをそのまま流用してクリック切り替え
+   できるようにする。枠の見た目（点線・背景）は.correction-box自体が既に持っているので、
+   二重にならないよう打ち消す（丸囲みも.mark-circleの円い枠がそのまま使えるので同様に扱う） */
+.correction-box input.fill-mark-toggle {
+  position: absolute;
+  inset: 0;
+  border: none;
+  background: transparent;
+}
+
+.correction-box input.fill-mark-toggle:checked {
+  border: none;
+  background: transparent;
+}
+
+/* フォントサイズはJS側で実際の設定値(zoom倍率込み)を都度style指定するため、ここでは固定しない。
+   はみ出す文字の切り取りは箱本体ではなくこのspanで行う（箱にoverflow:hiddenを付けると
+   真上にはみ出して置いている複製・削除ボタンまでクリックできなくなってしまうため） */
+.correction-box .correction-text-preview {
+  display: inline-block;
+  max-height: 100%;
+  color: var(--color-text);
+  white-space: nowrap;
+  overflow: hidden;
+  pointer-events: none;
+  box-sizing: border-box;
+  padding: 0 2px;
+}
+
+.correction-box .correction-text-preview.multiline {
+  white-space: normal;
+  overflow-wrap: anywhere;
+}
+
+/* テンプレ作成モードの項目ボックスと同じ考え方：複製・削除ボタンは常時表示せず、
+   選択中(.selected)の箇所だけ枠の真上に表示する。密集した修正箇所同士が干渉しないようにするため */
+.correction-box .box-toolbar {
+  display: none;
+  position: absolute;
+  top: -20px;
+  left: 0;
+  width: fit-content;
+  height: 18px;
+  align-items: center;
+  gap: 3px;
+}
+
+.correction-box.selected .box-toolbar {
+  display: flex;
+}
+
+.correction-box.selected {
+  box-shadow: 0 0 0 2px rgba(255, 107, 107, 0.5);
+  z-index: 20;
+}
+
+.correction-box .box-del,
+.correction-box .box-dup {
+  flex: 0 0 auto;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  color: #fff;
+  font-size: 10px;
+  line-height: 16px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.correction-box .box-del {
+  background: var(--color-danger);
+}
+
+.correction-box .box-dup {
+  background: var(--color-primary-dark);
+}
+
+.correction-box .box-resize {
+  position: absolute;
+  right: -4px;
+  bottom: -4px;
+  width: 9px;
+  height: 9px;
+  border-radius: 2px;
+  background: var(--color-primary-dark);
+  cursor: nwse-resize;
+}
+
+/* 修正モードのドラッグ中に出るアラインメントガイド（テンプレ作成モードと共通の.align-guideを流用） */
+
+/* 入力モード：入力欄オーバーレイ（テンプレート作成時に指定した枠と同じ位置・大きさに重ねる）
+   白塗りは③修正モードの出力時だけの処理。ここは常に透明にして、読み込んだPDFの罫線を
+   隠さないようにする（白く塗りつぶしたい場合は修正モードを使う）。
+   どこが入力欄か分かりにくいとの指摘のため、普段から薄い点線でそっと示す
+   （チェック・丸囲み用の`.fill-mark-toggle`で既に使っていたのと同じ、主張しすぎない配色） */
+input.fill-input {
+  position: absolute;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  border: 1px dashed rgba(120, 130, 145, 0.4);
+  background-color: transparent;
+  border-radius: 4px;
+  padding: 1px 3px;
+  font-family: inherit;
+  color: #1f2933;
+}
+
+input.fill-input:hover,
+input.fill-input:focus {
+  border-color: var(--color-primary);
+  background-color: rgba(255, 255, 255, 0.55);
+  outline: none;
+}
+
+/* チェック・丸囲みタイプ：ネイティブのcheckbox要素を土台にして、実際に出力される
+   マークの見た目（✓・○）そのままでクリック切り替えする。ブラウザ標準の見た目は
+   appearanceで消し、:checked疑似クラスで見た目を切り替える（自作divでの再現よりも
+   クリック判定がブラウザ間で確実に効く） */
+/* 複数行を許可した入力欄はtextareaを使う（PDF出力側で自動的に折り返して描画する） */
+textarea.fill-textarea {
+  position: absolute;
+  box-sizing: border-box;
+  border: 1px solid transparent;
+  background-color: transparent;
+  border-radius: 4px;
+  padding: 1px 3px;
+  font-family: inherit;
+  color: #1f2933;
+  resize: none;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+  line-height: 1.3;
+}
+
+textarea.fill-textarea:hover,
+textarea.fill-textarea:focus {
+  border-color: var(--color-primary);
+  background-color: rgba(255, 255, 255, 0.55);
+  outline: none;
+}
+
+input.fill-mark-toggle {
+  position: absolute;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  margin: 0;
+  padding: 0;
+  cursor: pointer;
+  /* 未選択の時は「クリックできる場所」を示すだけの控えめな色にする。
+     ここが赤だと、選択済みのマークと見分けがつかず紛らわしいという指摘があったため */
+  border: 1.5px dashed rgba(120, 130, 145, 0.45);
+  border-radius: 4px;
+  background: transparent;
+  font-weight: bold;
+  line-height: 1;
+}
+
+input.fill-mark-toggle.circle {
+  border-radius: 50%;
+}
+
+input.fill-mark-toggle:hover {
+  border-color: var(--color-primary);
+  background: rgba(47, 179, 128, 0.08);
+}
+
+input.fill-mark-toggle:checked {
+  /* 選択済みは実際にPDFへ書き込まれる色（黒系のペン色）に合わせる */
+  border-color: #1f2933;
+  border-style: solid;
+  background: rgba(31, 41, 51, 0.06);
+}
+
+input.fill-mark-toggle.checkbox {
+  position: absolute;
+}
+
+input.fill-mark-toggle.checkbox:checked::after {
+  content: "✓";
+  position: absolute;
+  inset: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #1f2933;
+  font-size: inherit;
+  font-weight: bold;
+}
+
+/* マス目タイプ：1マス1入力欄。普段はほぼ透明にして印刷済みの罫線が見えるようにし、
+   触れているマスだけ薄く色を付けて場所がわかるようにする */
+input.fill-cell-input {
+  position: absolute;
+  box-sizing: border-box;
+  -webkit-appearance: none;
+  appearance: none;
+  border: 1px solid transparent;
+  border-radius: 3px;
+  background-color: transparent;
+  text-align: center;
+  padding: 0;
+  font-family: inherit;
+  color: #1f2933;
+}
+
+input.fill-cell-input:hover,
+input.fill-cell-input:focus {
+  border-color: var(--color-primary);
+  background-color: rgba(255, 255, 255, 0.55);
+  outline: none;
+}
+
+/* 項目一覧 */
+.field-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  max-height: 260px;
+  overflow-y: auto;
+}
+
+.field-list li {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  padding: 6px 8px;
+  border-radius: 8px;
+  font-size: 13px;
+  margin-bottom: 4px;
+  background: #f6faf7;
+}
+
+.field-list .field-type-tag {
+  font-size: 10px;
+  color: #6b7a90;
+  background: #e8f1ea;
+  border-radius: 999px;
+  padding: 1px 7px;
+  margin-left: 4px;
+}
+
+/* テンプレート一覧 */
+.template-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+}
+
+.template-list li {
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 6px;
+  padding: 8px 10px;
+  border-radius: 10px;
+  background: #f6faf7;
+  margin-bottom: 6px;
+  font-size: 13px;
+}
+
+.template-list .tpl-meta {
+  color: #6b7a90;
+  font-size: 11px;
+}
+
+/* 入力単語リスト：1つの項目名に複数の候補値をチップで並べる。
+   登録が増えると縦に際限なく伸びて探しにくくなるため、<details>で折りたたみ式にしている
+   （既定は閉じた状態。項目名と件数だけがひと目で見え、必要な項目だけクリックして開ける） */
+.word-list-group {
+  list-style: none;
+  border-radius: 10px;
+  background: #f6faf7;
+  margin-bottom: 8px;
+  overflow: hidden;
+}
+
+.word-list-group details {
+  padding: 0 10px;
+}
+
+.word-list-group details[open] {
+  padding-bottom: 10px;
+}
+
+.word-list-group summary {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  font-weight: bold;
+  font-size: 13px;
+  color: var(--color-primary-dark);
+  padding: 10px 0;
+  cursor: pointer;
+  list-style: none; /* Safari/Chromeの標準の三角マークを消して、独自の見た目に統一する */
+}
+
+.word-list-group summary::-webkit-details-marker {
+  display: none;
+}
+
+.word-list-group summary::before {
+  content: '▶';
+  display: inline-block;
+  font-size: 10px;
+  color: #9aa7b8;
+  margin-right: 8px;
+  transition: transform 0.15s;
+}
+
+.word-list-group details[open] summary::before {
+  transform: rotate(90deg);
+}
+
+.word-list-group summary .word-list-label-text {
+  flex: 1;
+}
+
+.word-list-count {
+  font-size: 11px;
+  font-weight: normal;
+  color: #6b7a90;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 2px 8px;
+}
+
+.word-list-values {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.word-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 999px;
+  padding: 4px 6px 4px 10px;
+  font-size: 12px;
+}
+
+.word-chip-del {
+  width: 15px;
+  height: 15px;
+  border-radius: 50%;
+  background: var(--color-danger);
+  color: #fff;
+  font-size: 10px;
+  line-height: 15px;
+  text-align: center;
+  cursor: pointer;
+}
+
+.word-list-add-row {
+  display: flex;
+  gap: 6px;
+}
+
+.word-list-add-row input {
+  flex: 1;
+  min-width: 0;
+}
+
+/* 入力・出力モード：単語リストに候補が複数ある項目の「▾」ボタンと、その場に開く候補一覧。
+   サイドバーの遠い一覧から選ぶのではなく、入力欄のすぐ横で直接選べるようにしている。
+   候補のある項目が多いと、常時表示だと様式の文字と重なって邪魔になるため、
+   その入力欄を選択（フォーカス）している時だけ表示する（.visibleクラスで切り替え） */
+.field-candidate-btn {
+  position: absolute;
+  display: none;
+  width: 18px;
+  min-height: 16px;
+  background: var(--color-primary);
+  color: #fff;
+  border: none;
+  border-radius: 4px;
+  font-size: 10px;
+  line-height: 1;
+  cursor: pointer;
+  padding: 0;
+  z-index: 15;
+}
+
+.field-candidate-btn.visible {
+  display: block;
+}
+
+.field-candidate-btn:hover {
+  background: var(--color-primary-dark);
+}
+
+.field-candidate-dropdown {
+  position: absolute;
+  background: #fff;
+  border: 1px solid var(--color-border);
+  border-radius: 8px;
+  box-shadow: var(--shadow-soft);
+  z-index: 60;
+  max-height: 170px;
+  overflow-y: auto;
+  min-width: 140px;
+}
+
+.field-candidate-dropdown div {
+  padding: 6px 10px;
+  font-size: 12px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.field-candidate-dropdown div:hover {
+  background: rgba(47, 179, 128, 0.12);
+}
+
+.field-candidate-dropdown div.current {
+  font-weight: bold;
+  color: var(--color-primary-dark);
+}
+
+/* 項目編集パネル：画面全体を覆わず、対象の枠の横に出す（PDFとプレビューを隠さないため） */
+.field-popover {
+  position: fixed;
+  background: #fff;
+  border-radius: 14px;
+  padding: 16px;
+  width: 300px;
+  max-width: calc(100vw - 16px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.2);
+  border: 1px solid var(--color-border);
+  z-index: 200;
+}
+
+.field-popover h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--color-primary-dark);
+}
+
+.field-popover label {
+  display: block;
+  font-size: 12px;
+  color: #6b7a90;
+  margin: 10px 0 4px;
+}
+
+.field-popover input[type="text"],
+.field-popover select {
+  width: 100%;
+}
+
+.field-popover .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* 項目の設定パネル：サイドバーに常設（フローティングにしない）。修正モードの設定パネルも同じ見た目にする */
+#fieldEditPanel label,
+#correctionEditPanel label {
+  display: block;
+  font-size: 12px;
+  color: #6b7a90;
+  margin: 10px 0 4px;
+}
+
+#fieldEditPanel input[type="text"],
+#fieldEditPanel select,
+#correctionEditPanel input[type="text"],
+#correctionEditPanel select {
+  width: 100%;
+}
+
+#fieldEditPanel .modal-actions,
+#correctionEditPanel .modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+/* モーダル（項目登録） */
+.modal-backdrop {
+  position: fixed;
+  inset: 0;
+  background: rgba(47, 59, 82, 0.35);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 100;
+}
+
+.modal-box {
+  background: #fff;
+  border-radius: 16px;
+  padding: 20px;
+  width: 300px;
+  box-shadow: var(--shadow-soft);
+}
+
+.modal-box h3 {
+  margin: 0 0 12px;
+  font-size: 15px;
+  color: var(--color-primary-dark);
+}
+
+.modal-box label {
+  display: block;
+  font-size: 12px;
+  color: #6b7a90;
+  margin: 10px 0 4px;
+}
+
+.modal-box input[type="text"], .modal-box select {
+  width: 100%;
+}
+
+.modal-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 16px;
+}
+
+.empty-note {
+  color: #9aa7b8;
+  font-size: 13px;
+  padding: 8px 0;
+}
+
+.status-msg {
+  font-size: 13px;
+  padding: 8px 12px;
+  border-radius: 10px;
+  margin-bottom: 10px;
+}
+
+.status-msg.ok {
+  background: #e6f7ee;
+  color: var(--color-primary-dark);
+}
+
+.status-msg.err {
+  background: #ffefef;
+  color: var(--color-danger);
+}

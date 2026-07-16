@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>自治体PDF攻略</title>
+<link rel="stylesheet" href="style.css">
+</head>
+<body>
+
+<header class="app-header">
+  <h1>📋 自治体PDF攻略</h1>
+  <div class="mode-tabs">
+    <button class="mode-tab active" id="tabEditor" data-mode="editor">① テンプレート作成</button>
+    <button class="mode-tab" id="tabFiller" data-mode="filler">② 入力・出力</button>
+    <button class="mode-tab" id="tabCorrection" data-mode="correction">③ 修正モード</button>
+    <button class="mode-tab" id="tabProfile" data-mode="profile">④ 入力単語リスト</button>
+    <button class="mode-tab mode-tab-guide" id="usageGuideBtn" type="button">❓ 使い方ガイド</button>
+  </div>
+</header>
+
+<!-- 使い方ガイドモーダル -->
+<div class="modal-backdrop hidden" id="usageGuideModal">
+  <div class="modal-box" style="width:480px;max-height:80vh;overflow:auto;">
+    <h3>📘 使い方ガイド</h3>
+    <ol class="usage-guide-list">
+      <li><strong>① テンプレート作成</strong>：自治体PDFを読み込み、入力してほしい範囲をドラッグで囲んで項目を作ります。種類（テキスト・マス目・チェック・丸で囲む）や文字サイズ・配置は実際の見た目を確認しながら設定でき、最後に「テンプレートを保存」で登録します。</li>
+      <li>項目ボックスはドラッグで移動、右下ハンドルで大きさ調整、クリックして選択すると複製⧉・削除×ボタンが出ます。選択中は矢印キーで1pt単位（Shiftで5pt単位）の微調整もできます。</li>
+      <li>PDFプレビューは「－／＋／全体表示」ボタン、トラックパッドのピンチ、キーボードの「＋」「－」「0」でズームできます。</li>
+      <li><strong>② 入力・出力</strong>：保存済みテンプレートを選ぶと、PDFの上に入力欄が重なって表示されます。入力後は「PDFを出力してダウンロード」または「新しいタブで開く（印刷用）」で仕上げます。</li>
+      <li>利用者様ごとの入力内容は「💾 この入力内容を保存」でファイルに書き出し、「📂 保存した入力データを開く」で続きから編集できます。</li>
+      <li><strong>③ 修正モード</strong>：すでに文字が入ったPDFの一部だけを直したい時に使います（テンプレとしては保存されません）。</li>
+      <li><strong>④ 入力単語リスト</strong>：氏名・主治医名など繰り返し使う項目名ごとに候補値をストックできます。入力タブで候補が複数ある項目は、入力欄横の「▾」ボタンから選べます。</li>
+      <li>テンプレートは「📤 全テンプレートをバックアップ」または各テンプレートの「📤 このテンプレだけバックアップ」でJSONファイルに書き出せます。「📥 バックアップから読み込む」で読み込む時は、必要な分だけ選んで取り込めます。</li>
+    </ol>
+    <div class="modal-actions">
+      <button class="btn-primary" id="usageGuideCloseBtn">閉じる</button>
+    </div>
+  </div>
+</div>
+
+<div class="app-body">
+
+  <!-- ===== テンプレート作成モード ===== -->
+  <section id="modeEditor" class="mode-section">
+    <div class="panel main-panel">
+      <h2>PDF様式を読み込んで、入力してほしい範囲をドラッグで囲む</h2>
+      <div class="hint">
+        自治体からダウンロードしたPDFを選択すると、下にプレビューが表示されます。空欄にしたい範囲をドラッグで四角く囲むと、種類と文字の大きさを実際の見た目を確認しながら設定できます。「被保険者番号」のような1文字ずつマス目が分かれている項目は「マス目」タイプを選ぶと、マスの数に合わせて自動で文字を振り分けます。項目ボックスは中央をドラッグで移動、右下の四角をドラッグで大きさ調整、右上の×で削除、ダブルクリックで種類や文字サイズを編集できます。
+      </div>
+      <div class="toolbar">
+        <input type="file" id="pdfFileInput" accept="application/pdf">
+        <span id="editorFileName" class="tpl-meta"></span>
+      </div>
+      <div class="page-nav hidden" id="editorPageNav">
+        <button class="btn-outline" id="editorPrevPage">◀ 前のページ</button>
+        <span id="editorPageLabel">1 / 1 ページ</span>
+        <button class="btn-outline" id="editorNextPage">次のページ ▶</button>
+      </div>
+      <div class="zoom-toolbar">
+        <button class="btn-outline" id="editorZoomOutBtn" title="縮小">－</button>
+        <span class="zoom-label" id="editorZoomLabel">100%</span>
+        <button class="btn-outline" id="editorZoomInBtn" title="拡大">＋</button>
+        <button class="btn-outline" id="editorZoomFitBtn">🔍 全体表示</button>
+        <button class="btn-outline" id="editorUndoBtn" title="元に戻す（Ctrl+Z）" disabled>↩️ 元に戻す</button>
+        <button class="btn-outline" id="editorRedoBtn" title="やり直し（Ctrl+Y）" disabled>↪️ やり直し</button>
+      </div>
+      <div class="pdf-stage-wrap" id="editorStageWrap">
+        <div class="pdf-stage" id="editorStage">
+          <canvas id="editorCanvas"></canvas>
+          <div class="field-overlay" id="editorOverlay"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <div class="panel">
+        <h2>保存済みテンプレート</h2>
+        <ul class="template-list" id="editorTemplateList"></ul>
+        <p class="empty-note" id="editorTemplateEmpty">まだ保存されたテンプレートはありません</p>
+        <div class="hint" style="margin-top:12px;">
+          他のPCや職場のメンバーとテンプレートを共有するときは、バックアップファイル（.json）を書き出して渡してください。個人情報（プロフィール）は含まれません。1件だけ渡したい時は、各テンプレートの「📤 このテンプレだけバックアップ」をご利用ください。読み込む側は、ファイルに複数件入っていても必要な分だけ選んで取り込めます。
+        </div>
+        <div class="toolbar" style="margin-top:0;">
+          <button class="btn-outline" id="exportTemplatesBtn">📤 全テンプレートをバックアップ</button>
+          <label class="btn-outline" for="importTemplatesInput" style="cursor:pointer;">📥 バックアップから読み込む</label>
+          <input type="file" id="importTemplatesInput" accept="application/json" class="hidden">
+        </div>
+        <div id="backupStatusMsg"></div>
+      </div>
+      <div class="panel" id="fieldEditPanel">
+        <h2>項目の設定</h2>
+        <p class="empty-note" id="fieldEditPlaceholder">PDF上でドラッグして項目を追加するか、項目をダブルクリックすると、ここに設定が表示されます</p>
+        <div id="fieldEditForm" class="hidden">
+          <label>項目名（例：氏名、被保険者番号）</label>
+          <input type="text" id="modalLabelInput">
+          <label>種類</label>
+          <select id="modalTypeSelect">
+            <option value="text">テキスト入力（1行）</option>
+            <option value="boxed">マス目（1文字ずつの枠。被保険者番号など）</option>
+            <option value="checkbox">チェック（✓）</option>
+            <option value="circle">丸で囲む（例：はい・いいえ）</option>
+          </select>
+          <div id="fieldMultilineRow" class="hidden">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="modalMultilineInput" style="width:auto;">
+              複数行の入力を許可する（枠内で自動的に折り返します）
+            </label>
+          </div>
+          <div id="fieldAlignRow" class="hidden">
+            <label>文字の配置</label>
+            <select id="modalAlignSelect">
+              <option value="left">左寄せ</option>
+              <option value="center">中央寄せ</option>
+              <option value="right">右寄せ</option>
+            </select>
+          </div>
+          <div id="fieldFontSizeRow">
+            <label>文字の大きさ（実際の見え方はプレビューで確認できます）</label>
+            <div class="modal-row-inline">
+              <input type="range" id="modalFontSizeInput" min="6" max="24" step="0.5">
+              <span class="modal-row-value" id="modalFontSizeValue"></span>
+            </div>
+          </div>
+          <div id="fieldCellCountRow" class="hidden">
+            <label>マスの数（枠内に何文字分のマスを並べるか）</label>
+            <div class="modal-row-inline">
+              <input type="range" id="modalCellCountInput" min="1" max="20" step="1">
+              <span class="modal-row-value" id="modalCellCountValue"></span>
+            </div>
+            <label>マスとマスの間隔（実際の罫線に合わせて調整。プレビューの区切り線を見ながらどうぞ）</label>
+            <div class="modal-row-inline">
+              <input type="range" id="modalCellGapInput" min="-3" max="15" step="0.5">
+              <span class="modal-row-value" id="modalCellGapValue"></span>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-outline hidden" id="modalDuplicateBtn">⧉ 複製</button>
+            <button class="btn-outline" id="modalCancelBtn">キャンセル</button>
+            <button class="btn-primary" id="modalOkBtn">追加</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>テンプレートとして保存</h2>
+        <label style="font-size:12px;color:#6b7a90;">自治体名・様式名</label>
+        <input type="text" id="templateNameInput" placeholder="例：〇〇市 要介護認定申請書" style="width:100%;margin:6px 0 10px;">
+        <button class="btn-primary" id="saveTemplateBtn" style="width:100%;" disabled>💾 テンプレートを保存</button>
+        <div id="editorStatusMsg"></div>
+      </div>
+      <div class="panel">
+        <h2>このページの項目一覧</h2>
+        <ul class="field-list" id="editorFieldList"></ul>
+        <p class="empty-note" id="editorFieldEmpty">まだ項目がありません</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 入力・出力モード ===== -->
+  <section id="modeFiller" class="mode-section hidden">
+    <div class="panel main-panel">
+      <h2>様式を選んで、そのまま入力</h2>
+      <div class="hint">
+        右のパネルで様式を選ぶと、PDFの上に入力欄が重なって表示されます。入力が終わったら「PDFを出力」でファイルとして保存・印刷できます。
+      </div>
+      <div id="fillerStatusMsg"></div>
+      <div class="page-nav hidden" id="fillerPageNav">
+        <button class="btn-outline" id="fillerPrevPage">◀ 前のページ</button>
+        <span id="fillerPageLabel">1 / 1 ページ</span>
+        <button class="btn-outline" id="fillerNextPage">次のページ ▶</button>
+      </div>
+      <div class="zoom-toolbar">
+        <button class="btn-outline" id="fillerZoomOutBtn" title="縮小">－</button>
+        <span class="zoom-label" id="fillerZoomLabel">100%</span>
+        <button class="btn-outline" id="fillerZoomInBtn" title="拡大">＋</button>
+        <button class="btn-outline" id="fillerZoomFitBtn">🔍 全体表示</button>
+      </div>
+      <div class="pdf-stage-wrap" id="fillerStageWrap">
+        <div class="pdf-stage" id="fillerStage">
+          <canvas id="fillerCanvas"></canvas>
+          <div class="field-overlay" id="fillerOverlay" style="cursor:default;"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <div class="panel">
+        <h2>様式を選ぶ</h2>
+        <select id="templateSelect" style="width:100%;">
+          <option value="">-- テンプレートを選択 --</option>
+        </select>
+      </div>
+      <div class="panel">
+        <h2>PDFを出力</h2>
+        <button class="btn-secondary" id="exportPdfBtn" style="width:100%;" disabled>📄 PDFを出力してダウンロード</button>
+        <button class="btn-outline" id="openPdfBtn" style="width:100%;margin-top:8px;" disabled>🖨 新しいタブで開く（印刷用）</button>
+      </div>
+      <div class="panel">
+        <h2>入力単語リストとの連携</h2>
+        <button class="btn-outline" id="autoFillBtn" style="width:100%;" disabled>📋 候補が1件だけの項目を自動入力</button>
+        <button class="btn-outline" id="saveToProfileBtn" style="width:100%;margin-top:8px;" disabled>💾 入力内容を単語リストに追加</button>
+        <div class="hint" style="margin-top:10px;">
+          候補が複数ある項目は、右下の「このページの入力状況」からどれを使うか選べます。
+        </div>
+      </div>
+      <div class="panel">
+        <h2>利用者様ごとに保存</h2>
+        <label style="font-size:12px;color:#6b7a90;">利用者名など（任意・ファイル名に使います）</label>
+        <input type="text" id="caseLabelInput" style="width:100%;margin:6px 0 10px;">
+        <button class="btn-secondary" id="saveCaseBtn" style="width:100%;" disabled>💾 この入力内容を保存（.json）</button>
+        <button class="btn-outline" id="loadCaseBtn" style="width:100%;margin-top:8px;">📂 保存した入力データを開く</button>
+        <input type="file" id="loadCaseInput" accept="application/json" class="hidden">
+        <div id="caseFileStatusMsg" class="hint" style="margin-top:8px;"></div>
+        <div class="hint" style="margin-top:12px;">
+          入力が終わった様式は「この入力内容を保存」で.jsonファイルとして書き出せます。様式そのもの（PDF・項目位置）と入力した答えの両方が1つのファイルに入るので、利用者様ごとのフォルダに保管しておけば、次回このアプリで開くだけで続きから修正・再提出できます。対応ブラウザ（Chrome・Edge等）では、一度開いた（または保存した）ファイルに対して「この入力内容を保存」を押すと、新しいファイルを増やさずそのまま上書き保存されます。
+        </div>
+      </div>
+      <div class="panel">
+        <h2>このページの入力状況</h2>
+        <ul class="field-list" id="fillerFieldStatusList"></ul>
+        <p class="empty-note" id="fillerFieldStatusEmpty">様式を選ぶと項目がここに表示されます</p>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 修正モード ===== -->
+  <section id="modeCorrection" class="mode-section hidden">
+    <div class="panel main-panel">
+      <h2>入力済みのPDFを、直したい部分だけ修正</h2>
+      <div class="hint">
+        去年の申請書など、すでに文字が入ったPDFを読み込んで、直したい場所をドラッグで囲むと白く隠せます。そのまま文字を入力すると新しい内容に差し替わります（文字を入力しなければ、白抜きだけになります）。テンプレートとしては保存されず、その場限りの修正用です。
+      </div>
+      <div class="toolbar">
+        <input type="file" id="correctionFileInput" accept="application/pdf">
+        <span id="correctionFileName" class="tpl-meta"></span>
+        <button class="btn-secondary" id="correctionExportBtn" disabled>📄 PDFを出力してダウンロード</button>
+        <button class="btn-outline" id="correctionOpenBtn" disabled>🖨 新しいタブで開く（印刷用）</button>
+      </div>
+      <div id="correctionStatusMsg"></div>
+      <div class="page-nav hidden" id="correctionPageNav">
+        <button class="btn-outline" id="correctionPrevPage">◀ 前のページ</button>
+        <span id="correctionPageLabel">1 / 1 ページ</span>
+        <button class="btn-outline" id="correctionNextPage">次のページ ▶</button>
+      </div>
+      <div class="zoom-toolbar">
+        <button class="btn-outline" id="correctionZoomOutBtn" title="縮小">－</button>
+        <span class="zoom-label" id="correctionZoomLabel">100%</span>
+        <button class="btn-outline" id="correctionZoomInBtn" title="拡大">＋</button>
+        <button class="btn-outline" id="correctionZoomFitBtn">🔍 全体表示</button>
+        <button class="btn-outline" id="correctionUndoBtn" title="元に戻す（Ctrl+Z）" disabled>↩️ 元に戻す</button>
+        <button class="btn-outline" id="correctionRedoBtn" title="やり直し（Ctrl+Y）" disabled>↪️ やり直し</button>
+      </div>
+      <div class="pdf-stage-wrap" id="correctionStageWrap">
+        <div class="pdf-stage" id="correctionStage">
+          <canvas id="correctionCanvas"></canvas>
+          <div class="field-overlay" id="correctionOverlay"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="side-panel">
+      <div class="panel" id="correctionEditPanel">
+        <h2>修正内容の設定</h2>
+        <p class="empty-note" id="correctionEditPlaceholder">PDF上でドラッグして修正箇所を追加するか、箇所をダブルクリックすると、ここに設定が表示されます</p>
+        <div id="correctionEditForm" class="hidden">
+          <label>種類</label>
+          <select id="corrTypeSelect">
+            <option value="text">文字を書き直す</option>
+            <option value="checkbox">チェックを入れる（✓）</option>
+            <option value="circle">丸で囲む</option>
+          </select>
+          <div id="corrTextExtra">
+            <label>差し替える文字（空欄なら白抜きだけになります）</label>
+            <input type="text" id="corrTextInput">
+            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+              <input type="checkbox" id="corrMultilineInput" style="width:auto;">
+              複数行の入力を許可する（枠内で自動的に折り返します）
+            </label>
+            <label>文字の配置</label>
+            <select id="corrAlignSelect">
+              <option value="left">左寄せ</option>
+              <option value="center">中央寄せ</option>
+              <option value="right">右寄せ</option>
+            </select>
+            <label>文字の大きさ（実際の見え方はプレビューで確認できます）</label>
+            <div class="modal-row-inline">
+              <input type="range" id="corrFontSizeInput" min="6" max="24" step="0.5">
+              <span class="modal-row-value" id="corrFontSizeValue"></span>
+            </div>
+          </div>
+          <div class="modal-actions">
+            <button class="btn-outline hidden" id="corrDuplicateBtn">⧉ 複製</button>
+            <button class="btn-outline" id="corrCancelBtn">キャンセル</button>
+            <button class="btn-primary" id="corrOkBtn">追加</button>
+          </div>
+        </div>
+      </div>
+      <div class="panel">
+        <h2>このページの修正箇所</h2>
+        <ul class="field-list" id="correctionList"></ul>
+        <p class="empty-note" id="correctionEmpty">まだ修正箇所がありません</p>
+      </div>
+      <div class="panel" style="margin-top:16px;">
+        <h2>修正の入れ方</h2>
+        <div class="hint" style="margin-bottom:0;">
+          ① 直したい場所をドラッグで四角く囲む<br>
+          ② 種類（テキスト／チェック／丸囲み）を選ぶ<br>
+          ③ テキストならそのまま文字を入力<br>
+          ④ 箇所をクリックして選択すると、複製⧉・削除×ボタンが出ます（中央ドラッグで移動、右下ハンドルで大きさ調整も可能）
+        </div>
+      </div>
+    </div>
+  </section>
+
+  <!-- ===== 入力単語リストモード ===== -->
+  <section id="modeProfile" class="mode-section hidden">
+    <div class="panel main-panel" style="max-width:560px;">
+      <h2>入力単語リスト</h2>
+      <div class="hint">
+        氏名・主治医名・医療機関名など、様式に繰り返し出てくる項目名ごとに、候補となる値をいくつでもストックしておけます（例：「主治医名」に担当利用者の分だけ複数の医師名を登録）。項目名はテンプレート作成時に付けた項目名と完全に同じ文字にしてください。候補が1件だけの項目は入力・出力モードで自動的に反映され、複数ある項目はどれを使うかその場で選べます。
+      </div>
+      <button class="btn-primary" id="profileAddBtn" style="margin-bottom:14px;">＋ 項目を追加</button>
+      <ul id="profileList"></ul>
+      <p class="empty-note" id="profileEmpty">まだ登録された項目はありません</p>
+    </div>
+  </section>
+
+</div>
+
+<!-- ライブラリ（すべてローカル配置・外部通信なし） -->
+<script src="lib/pdf.min.js"></script>
+<script src="lib/pdf-lib.min.js"></script>
+<script src="lib/fontkit.umd.min.js"></script>
+<script src="lib/fonts/notosansjp_base64.js"></script>
+
+<script src="template_store.js"></script>
+<script src="profile_store.js"></script>
+<script src="draft_store.js"></script>
+<script src="fill_draft_store.js"></script>
+<script src="pdf_utils.js"></script>
+<script src="editor.js"></script>
+<script src="filler.js"></script>
+<script src="correction.js"></script>
+<script src="profile.js"></script>
+<script src="app.js"></script>
+</body>
+</html>
