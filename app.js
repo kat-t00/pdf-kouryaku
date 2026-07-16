@@ -29,7 +29,7 @@
     const backdrop = document.createElement('div');
     backdrop.className = 'modal-backdrop';
     backdrop.innerHTML = `
-      <div class="modal-box">
+      <div class="modal-box modal-box-wide">
         <h3>テンプレートが未保存です</h3>
         <p style="font-size:13px;color:#6b7a90;line-height:1.6;margin:0 0 4px;">
           自動保存はブラウザを閉じた時の復旧用の下書きで、テンプレート一覧への正式な保存とは別物です。<br>
@@ -38,10 +38,10 @@
         <label>テンプレート名</label>
         <input type="text" id="unsavedNameInput" placeholder="例：〇〇市 要介護認定申請書">
         <div id="unsavedModalError" style="font-size:12px;color:#d9534f;margin-top:4px;"></div>
-        <div class="modal-actions">
-          <button class="btn-outline" id="unsavedCancelBtn">キャンセル</button>
-          <button class="btn-outline" id="unsavedDiscardBtn">保存せず移動</button>
+        <div class="modal-actions modal-actions-stack">
           <button class="btn-primary" id="unsavedSaveBtn">今すぐ保存して移動</button>
+          <button class="btn-outline" id="unsavedDiscardBtn">保存せず移動</button>
+          <button class="btn-outline" id="unsavedCancelBtn">キャンセル</button>
         </div>
       </div>`;
     document.body.appendChild(backdrop);
