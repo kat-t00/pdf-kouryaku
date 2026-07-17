@@ -348,7 +348,10 @@ const Editor = (() => {
 
   // ===== 項目ボックスの描画 =====
   function renderFieldBoxes() {
-    overlay.querySelectorAll('.field-box').forEach(el => el.remove());
+    // 項目名はホバー時にtitle属性のツールチップで表示しているが、ツールチップが表示された
+    // 状態のまま要素をDOMから消すと、ブラウザが消すタイミングを逃して文字だけがゴーストのように
+    // 画面に残ってしまうことがある。消す直前にtitleを外しておくことでこれを防ぐ
+    overlay.querySelectorAll('.field-box').forEach(el => { el.removeAttribute('title'); el.remove(); });
     const page = currentPage();
     page.fields.forEach(field => addFieldBoxElement(field, page.heightPt));
   }
