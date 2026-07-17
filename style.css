@@ -814,28 +814,12 @@ input.fill-cell-input:focus {
   margin-left: 4px;
 }
 
-/* テンプレート一覧 */
+/* テンプレート一覧：保存件数が増えても探しやすいよう、各項目は入力単語リストと同じ
+   .word-list-group（折りたたみ式の<details>）を使い回している。見た目はそちら側のCSSに任せる */
 .template-list {
   list-style: none;
   margin: 0;
   padding: 0;
-}
-
-.template-list li {
-  display: flex;
-  flex-direction: column;
-  align-items: stretch;
-  gap: 6px;
-  padding: 8px 10px;
-  border-radius: 10px;
-  background: #f6faf7;
-  margin-bottom: 6px;
-  font-size: 13px;
-}
-
-.template-list .tpl-meta {
-  color: #6b7a90;
-  font-size: 11px;
 }
 
 /* 入力単語リスト：1つの項目名に複数の候補値をチップで並べる。
@@ -1034,8 +1018,7 @@ input.fill-cell-input:focus {
   margin-top: 16px;
 }
 
-/* 項目の設定パネル：サイドバーに常設（フローティングにしない）。修正モードの設定パネルも同じ見た目にする */
-#fieldEditPanel label,
+/* 修正モードの項目設定パネル：こちらはサイドバーに常設のまま（ポップアップ化は項目登録側のみ対応） */
 #correctionEditPanel label {
   display: block;
   font-size: 12px;
@@ -1043,14 +1026,11 @@ input.fill-cell-input:focus {
   margin: 10px 0 4px;
 }
 
-#fieldEditPanel input[type="text"],
-#fieldEditPanel select,
 #correctionEditPanel input[type="text"],
 #correctionEditPanel select {
   width: 100%;
 }
 
-#fieldEditPanel .modal-actions,
 #correctionEditPanel .modal-actions {
   display: flex;
   justify-content: flex-end;

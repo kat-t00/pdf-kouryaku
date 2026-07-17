@@ -90,6 +90,7 @@
       </div>
       <div class="panel">
         <h2>保存済みテンプレート</h2>
+        <input type="text" id="templateSearchInput" placeholder="🔍 テンプレート名で絞り込み" style="width:100%;margin-bottom:10px;">
         <ul class="template-list" id="editorTemplateList"></ul>
         <p class="empty-note" id="editorTemplateEmpty">まだ保存されたテンプレートはありません</p>
         <div class="hint" style="margin-top:12px;">
@@ -102,59 +103,6 @@
         </div>
         <div id="backupStatusMsg"></div>
       </div>
-      <div class="panel" id="fieldEditPanel">
-        <h2>項目の設定</h2>
-        <p class="empty-note" id="fieldEditPlaceholder">PDF上でドラッグして項目を追加するか、項目をダブルクリックすると、ここに設定が表示されます</p>
-        <div id="fieldEditForm" class="hidden">
-          <label>項目名（例：氏名、被保険者番号）</label>
-          <input type="text" id="modalLabelInput">
-          <label>種類</label>
-          <select id="modalTypeSelect">
-            <option value="text">テキスト入力（1行）</option>
-            <option value="boxed">マス目（1文字ずつの枠。被保険者番号など）</option>
-            <option value="checkbox">チェック（✓）</option>
-            <option value="circle">丸で囲む（例：はい・いいえ）</option>
-          </select>
-          <div id="fieldMultilineRow" class="hidden">
-            <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
-              <input type="checkbox" id="modalMultilineInput" style="width:auto;">
-              複数行の入力を許可する（枠内で自動的に折り返します）
-            </label>
-          </div>
-          <div id="fieldAlignRow" class="hidden">
-            <label>文字の配置</label>
-            <select id="modalAlignSelect">
-              <option value="left">左寄せ</option>
-              <option value="center">中央寄せ</option>
-              <option value="right">右寄せ</option>
-            </select>
-          </div>
-          <div id="fieldFontSizeRow">
-            <label>文字の大きさ（実際の見え方はプレビューで確認できます）</label>
-            <div class="modal-row-inline">
-              <input type="range" id="modalFontSizeInput" min="6" max="24" step="0.5">
-              <span class="modal-row-value" id="modalFontSizeValue"></span>
-            </div>
-          </div>
-          <div id="fieldCellCountRow" class="hidden">
-            <label>マスの数（枠内に何文字分のマスを並べるか）</label>
-            <div class="modal-row-inline">
-              <input type="range" id="modalCellCountInput" min="1" max="20" step="1">
-              <span class="modal-row-value" id="modalCellCountValue"></span>
-            </div>
-            <label>マスとマスの間隔（実際の罫線に合わせて調整。プレビューの区切り線を見ながらどうぞ）</label>
-            <div class="modal-row-inline">
-              <input type="range" id="modalCellGapInput" min="-3" max="15" step="0.5">
-              <span class="modal-row-value" id="modalCellGapValue"></span>
-            </div>
-          </div>
-          <div class="modal-actions">
-            <button class="btn-outline hidden" id="modalDuplicateBtn">⧉ 複製</button>
-            <button class="btn-outline" id="modalCancelBtn">キャンセル</button>
-            <button class="btn-primary" id="modalOkBtn">追加</button>
-          </div>
-        </div>
-      </div>
       <div class="panel">
         <h2>このページの項目一覧</h2>
         <ul class="field-list" id="editorFieldList"></ul>
@@ -162,6 +110,59 @@
       </div>
     </div>
   </section>
+
+  <!-- 項目の設定ポップアップ：サイドバーに常設せず、PDF上で今編集中の項目のすぐ横に浮かせて出す。
+       画面外をクリックすると自動で保存して閉じる（editor.js側で位置計算・開閉を制御） -->
+  <div class="field-popover hidden" id="fieldEditPopover">
+    <h3>項目の設定</h3>
+    <label>項目名（例：氏名、被保険者番号）</label>
+    <input type="text" id="modalLabelInput">
+    <label>種類</label>
+    <select id="modalTypeSelect">
+      <option value="text">テキスト入力（1行）</option>
+      <option value="boxed">マス目（1文字ずつの枠。被保険者番号など）</option>
+      <option value="checkbox">チェック（✓）</option>
+      <option value="circle">丸で囲む（例：はい・いいえ）</option>
+    </select>
+    <div id="fieldMultilineRow" class="hidden">
+      <label style="display:flex;align-items:center;gap:6px;cursor:pointer;">
+        <input type="checkbox" id="modalMultilineInput" style="width:auto;">
+        複数行の入力を許可する（枠内で自動的に折り返します）
+      </label>
+    </div>
+    <div id="fieldAlignRow" class="hidden">
+      <label>文字の配置</label>
+      <select id="modalAlignSelect">
+        <option value="left">左寄せ</option>
+        <option value="center">中央寄せ</option>
+        <option value="right">右寄せ</option>
+      </select>
+    </div>
+    <div id="fieldFontSizeRow">
+      <label>文字の大きさ（実際の見え方はプレビューで確認できます）</label>
+      <div class="modal-row-inline">
+        <input type="range" id="modalFontSizeInput" min="6" max="24" step="0.5">
+        <span class="modal-row-value" id="modalFontSizeValue"></span>
+      </div>
+    </div>
+    <div id="fieldCellCountRow" class="hidden">
+      <label>マスの数（枠内に何文字分のマスを並べるか）</label>
+      <div class="modal-row-inline">
+        <input type="range" id="modalCellCountInput" min="1" max="20" step="1">
+        <span class="modal-row-value" id="modalCellCountValue"></span>
+      </div>
+      <label>マスとマスの間隔（実際の罫線に合わせて調整。プレビューの区切り線を見ながらどうぞ）</label>
+      <div class="modal-row-inline">
+        <input type="range" id="modalCellGapInput" min="-3" max="15" step="0.5">
+        <span class="modal-row-value" id="modalCellGapValue"></span>
+      </div>
+    </div>
+    <div class="modal-actions">
+      <button class="btn-outline hidden" id="modalDuplicateBtn">⧉ 複製</button>
+      <button class="btn-outline" id="modalCancelBtn">キャンセル</button>
+      <button class="btn-primary" id="modalOkBtn">追加</button>
+    </div>
+  </div>
 
   <!-- ===== 入力・出力モード ===== -->
   <section id="modeFiller" class="mode-section hidden">

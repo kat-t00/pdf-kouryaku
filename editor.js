@@ -42,13 +42,13 @@ const Editor = (() => {
   const statusEl = document.getElementById('editorStatusMsg');
   const templateListEl = document.getElementById('editorTemplateList');
   const templateEmptyEl = document.getElementById('editorTemplateEmpty');
+  const templateSearchInput = document.getElementById('templateSearchInput');
   const exportTemplatesBtn = document.getElementById('exportTemplatesBtn');
   const importTemplatesInput = document.getElementById('importTemplatesInput');
   const backupStatusEl = document.getElementById('backupStatusMsg');
 
-  // 項目の設定パネル（サイドバーに固定表示。様式やプレビューに重ならない）
-  const fieldEditPlaceholder = document.getElementById('fieldEditPlaceholder');
-  const fieldEditForm = document.getElementById('fieldEditForm');
+  // 項目の設定ポップアップ（PDF上の対象項目のすぐ横に浮かせて表示。サイドバーは常設しない）
+  const fieldEditPopover = document.getElementById('fieldEditPopover');
   const labelInput = document.getElementById('modalLabelInput');
   const typeSelect = document.getElementById('modalTypeSelect');
   const multilineRow = document.getElementById('fieldMultilineRow');
@@ -67,6 +67,9 @@ const Editor = (() => {
   const fieldOkBtn = document.getElementById('modalOkBtn');
   const fieldDuplicateBtn = document.getElementById('modalDuplicateBtn');
   let editSession = null; // { existingField, pixelRect, previewEl, onSave }
+  // ドラッグで新規項目を作った直後は、そのドラッグを終えたmouseupに続けてclickイベントが発生し、
+  // 開いたばかりのポップアップを「外側クリック」と誤認して即座に閉じてしまう。それを1回だけ無視するためのフラグ
+  let suppressNextOutsideClick = false;
 
   const DEFAULT_FONT_SIZE = 11;
   const DEFAULT_CELL_COUNT = 6;
@@ -210,6 +213,14 @@ const Editor = (() => {
     updateZoomLabel();
     rerenderForZoom();
   }, { passive: false });
+
+  // ポップアップを開いたままPDFをスクロール・画面をリサイズしても、対象項目の横に追従させる
+  stageWrap.addEventListener('scroll', () => {
+    if (editSession) positionFieldPopover(editSession.pixelRect);
+  });
+  window.addEventListener('resize', () => {
+    if (editSession) positionFieldPopover(editSession.pixelRect);
+  });
 
   // キーボード操作：+/-/0でズーム、選択中の項目があれば矢印キーで位置を微調整できる
   // （Shiftを押しながらだと大きく動く）。他のテキスト入力欄にフォーカスがある時は横取りしない
@@ -659,6 +670,9 @@ const Editor = (() => {
     const heightPt = currentPage().heightPt;
     const pdfRect = PdfUtils.pixelRectToPdfRect(startX, startY, curX, curY, heightPt, zoom.getScale());
 
+    // このmouseupの直後に続けて発生するclickイベントで、開いたばかりのポップアップが
+    // 「外側クリックされた」と誤認されて即座に閉じてしまわないよう、1回だけ無視させる
+    suppressNextOutsideClick = true;
     openFieldModal(null, pixelRect, (result) => {
       const field = Object.assign({ id: makeFieldId() }, pdfRect, result);
       currentPage().fields.push(field);
@@ -678,9 +692,11 @@ const Editor = (() => {
     });
   }
 
-  // ===== 項目の種類・見え方を決めるモーダル（実寸のライブプレビュー付き） =====
+  // ===== 項目の種類・見え方を決めるポップアップ（実寸のライブプレビュー付き） =====
   function openFieldModal(existingField, pixelRect, onSave) {
-    closeFieldEditor(); // 前の編集セッションが残っていれば片付ける
+    // 前の編集セッションが残っていれば、画面外クリックと同じ扱いで確定（無理なら破棄）してから開き直す。
+    // ここをただの破棄にすると「別の項目をダブルクリックしただけで前の入力が消える」事故になるため
+    if (editSession && !commitFieldEdit()) closeFieldEditor();
 
     const previewEl = document.createElement('div');
     previewEl.style.position = 'absolute';
@@ -692,8 +708,6 @@ const Editor = (() => {
 
     editSession = { existingField, pixelRect, previewEl, onSave };
 
-    fieldEditPlaceholder.classList.add('hidden');
-    fieldEditForm.classList.remove('hidden');
     labelInput.value = existingField ? existingField.label : '';
     typeSelect.value = existingField ? existingField.type : 'text';
     multilineInput.checked = existingField ? !!existingField.multiline : false;
@@ -705,7 +719,34 @@ const Editor = (() => {
     fieldDuplicateBtn.classList.toggle('hidden', !existingField);
 
     refreshFieldPreview();
+    positionFieldPopover(pixelRect);
     labelInput.focus();
+  }
+
+  // ポップアップを、対象項目の枠を隠さない位置（基本は右横、入らなければ左横）に浮かせる。
+  // 高さは中身（項目の種類）によって変わるため、まず表示してから実測して縦位置を画面内に収める
+  function positionFieldPopover(pixelRect) {
+    const overlayRect = overlay.getBoundingClientRect();
+    const fieldLeft = overlayRect.left + pixelRect.left;
+    const fieldTop = overlayRect.top + pixelRect.top;
+    const fieldRight = fieldLeft + pixelRect.width;
+    const gap = 12;
+    const margin = 8;
+    const popoverWidth = fieldEditPopover.offsetWidth || 300;
+
+    let left = fieldRight + gap;
+    if (left + popoverWidth > window.innerWidth - margin) left = fieldLeft - gap - popoverWidth;
+    left = Math.max(margin, Math.min(left, window.innerWidth - popoverWidth - margin));
+
+    fieldEditPopover.style.left = left + 'px';
+    fieldEditPopover.style.top = fieldTop + 'px';
+    fieldEditPopover.classList.remove('hidden');
+
+    requestAnimationFrame(() => {
+      const height = fieldEditPopover.offsetHeight;
+      const top = Math.max(margin, Math.min(fieldTop, window.innerHeight - height - margin));
+      fieldEditPopover.style.top = top + 'px';
+    });
   }
 
   function closeFieldEditor() {
@@ -713,8 +754,37 @@ const Editor = (() => {
       editSession.previewEl.parentNode.removeChild(editSession.previewEl);
     }
     editSession = null;
-    fieldEditForm.classList.add('hidden');
-    fieldEditPlaceholder.classList.remove('hidden');
+    fieldEditPopover.classList.add('hidden');
+  }
+
+  // OKボタン・画面外クリックのどちらからも呼ぶ、確定処理の共通部分。
+  // 項目名が必須なのに空欄の場合はfalseを返す（呼び出し側で「フォーカスを戻す」か「諦めて閉じる」かを判断させる）
+  function commitFieldEdit() {
+    if (!editSession) return true;
+    const type = typeSelect.value;
+    let label = labelInput.value.trim();
+    if (!label) {
+      if (type === 'checkbox' || type === 'circle') {
+        label = autoLabelFor(type);
+      } else {
+        return false;
+      }
+    }
+    const result = { label, type };
+    if (type === 'text') {
+      result.multiline = multilineInput.checked;
+      result.align = alignSelect.value;
+    }
+    if (type === 'text' || type === 'boxed') result.fontSize = parseFloat(fontSizeInput.value) || DEFAULT_FONT_SIZE;
+    if (type === 'boxed') {
+      result.cellCount = parseInt(cellCountInput.value, 10) || DEFAULT_CELL_COUNT;
+      result.cellGap = parseFloat(cellGapInput.value) || 0;
+    }
+    const onSave = editSession.onSave;
+    closeFieldEditor();
+    pushUndoSnapshot(); // 新規追加・既存項目の設定変更、どちらもここでまとめて履歴に記録する
+    onSave(result);
+    return true;
   }
 
   function syncFieldFormVisibility() {
@@ -764,32 +834,17 @@ const Editor = (() => {
   cellGapInput.addEventListener('input', refreshFieldPreview);
   fieldCancelBtn.addEventListener('click', closeFieldEditor);
   fieldOkBtn.addEventListener('click', () => {
-    if (!editSession) return;
-    const type = typeSelect.value;
-    let label = labelInput.value.trim();
-    if (!label) {
-      if (type === 'checkbox' || type === 'circle') {
-        label = autoLabelFor(type);
-      } else {
-        labelInput.focus();
-        return;
-      }
-    }
-    const result = { label, type };
-    if (type === 'text') {
-      result.multiline = multilineInput.checked;
-      result.align = alignSelect.value;
-    }
-    if (type === 'text' || type === 'boxed') result.fontSize = parseFloat(fontSizeInput.value) || DEFAULT_FONT_SIZE;
-    if (type === 'boxed') {
-      result.cellCount = parseInt(cellCountInput.value, 10) || DEFAULT_CELL_COUNT;
-      result.cellGap = parseFloat(cellGapInput.value) || 0;
-    }
-    const onSave = editSession.onSave;
-    closeFieldEditor();
-    pushUndoSnapshot(); // 新規追加・既存項目の設定変更、どちらもここでまとめて履歴に記録する
-    onSave(result);
+    if (!commitFieldEdit()) labelInput.focus(); // 項目名が必須なのに空欄だった場合はそこにフォーカスを戻す
   });
+
+  // ポップアップの外側をクリックしたら、キャンセルではなく「入力し終えたもの」として自動で確定する。
+  // クリックした場所がポップアップの中（ボタン類含む）なら何もしない
+  document.addEventListener('click', (e) => {
+    if (suppressNextOutsideClick) { suppressNextOutsideClick = false; return; }
+    if (!editSession || fieldEditPopover.contains(e.target)) return;
+    if (!commitFieldEdit()) closeFieldEditor(); // 項目名必須なのに空欄のまま外側をクリックした場合は、その項目自体を諦めて閉じる
+  });
+
   fieldDuplicateBtn.addEventListener('click', () => {
     if (!editSession || !editSession.existingField) return;
     const newField = duplicateField(editSession.existingField);
@@ -935,16 +990,44 @@ const Editor = (() => {
     return true;
   }
 
+  // 保存件数が増えるとサイドバーがどんどん縦に伸びて探しにくくなるため、
+  // ①名前で絞り込める検索欄　②項目名だけ見えて中身（操作ボタン）は開くまで畳んでおく、の2本立てで対応する。
+  // 折りたたみは単語リスト（Profile）と同じくブラウザ標準の<details>を使い、開閉状態はrender()をまたいで
+  // expandedTemplateIdsで維持する（毎回作り直しても、開いていたテンプレが閉じてしまわないように）
+  const expandedTemplateIds = new Set();
+
   function renderTemplateList() {
-    const templates = TemplateStore.list();
+    const allTemplates = TemplateStore.list();
+    const keyword = templateSearchInput.value.trim().toLowerCase();
+    const templates = keyword ? allTemplates.filter(t => t.name.toLowerCase().includes(keyword)) : allTemplates;
+
     templateListEl.innerHTML = '';
-    templateEmptyEl.classList.toggle('hidden', templates.length > 0);
+    if (allTemplates.length === 0) {
+      templateEmptyEl.textContent = 'まだ保存されたテンプレートはありません';
+      templateEmptyEl.classList.remove('hidden');
+    } else if (templates.length === 0) {
+      templateEmptyEl.textContent = '一致するテンプレートが見つかりません';
+      templateEmptyEl.classList.remove('hidden');
+    } else {
+      templateEmptyEl.classList.add('hidden');
+    }
+
     templates.forEach(t => {
       const li = document.createElement('li');
-      const info = document.createElement('div');
-      info.innerHTML = `${escapeHtml(t.name)}<br><span class="tpl-meta">${t.pageCount}ページ・${new Date(t.createdAt).toLocaleDateString('ja-JP')}</span>`;
-      const actions = document.createElement('div');
+      li.className = 'word-list-group';
 
+      const details = document.createElement('details');
+      details.open = expandedTemplateIds.has(t.id);
+      details.addEventListener('toggle', () => {
+        if (details.open) expandedTemplateIds.add(t.id);
+        else expandedTemplateIds.delete(t.id);
+      });
+
+      const summary = document.createElement('summary');
+      summary.innerHTML = `<span class="word-list-label-text">${escapeHtml(t.name)}</span><span class="word-list-count">${t.pageCount}ページ・${new Date(t.createdAt).toLocaleDateString('ja-JP')}</span>`;
+      details.appendChild(summary);
+
+      const actions = document.createElement('div');
       actions.style.display = 'flex';
       actions.style.flexWrap = 'wrap';
       actions.style.gap = '6px';
@@ -997,8 +1080,8 @@ const Editor = (() => {
       actions.appendChild(copyBtn);
       actions.appendChild(backupBtn);
       actions.appendChild(delBtn);
-      li.appendChild(info);
-      li.appendChild(actions);
+      details.appendChild(actions);
+      li.appendChild(details);
       templateListEl.appendChild(li);
     });
   }
@@ -1159,6 +1242,7 @@ const Editor = (() => {
   });
 
   saveBtn.addEventListener('click', saveTemplate);
+  templateSearchInput.addEventListener('input', renderTemplateList);
   nameInput.addEventListener('input', scheduleDraftSave);
 
   function init() {
