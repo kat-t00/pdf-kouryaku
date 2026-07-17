@@ -113,6 +113,7 @@ const Editor = (() => {
       nameInput.value = draft.name || '';
       await loadFromArrayBuffer(originalArrayBuffer, (draft.name || '下書き') + '.pdf');
       isDirty = true; // 復元した下書きは、正式保存されていない状態そのものなので「未保存」扱いにする
+      renderTemplateList(); // 下書きが既存テンプレートの続きだった場合、一覧側の「上書き保存」ボタンも合わせて表示する
       showStatus('前回の続きの下書きを復元しました');
     } catch (e) {
       console.error('下書きの復元に失敗しました', e);
@@ -157,6 +158,7 @@ const Editor = (() => {
     fieldListEl.innerHTML = '';
     fieldEmptyEl.classList.remove('hidden');
 
+    renderTemplateList(); // 編集中のテンプレートがなくなったので、一覧側の「上書き保存」ボタンも消す
     showStatus('新規作成しました');
   }
 
@@ -953,6 +955,17 @@ const Editor = (() => {
       editBtn.title = 'このテンプレートを上のプレビューに読み込んで編集します';
       editBtn.addEventListener('click', () => loadTemplateForEdit(t.id));
 
+      // 今まさに編集中のテンプレートだけ、一覧側からも上書き保存できるようにする
+      // （他のテンプレートの項目に出しても、今開いている別の様式で上書きされてしまい紛らわしいため）
+      let overwriteBtn = null;
+      if (t.id === editingTemplateId) {
+        overwriteBtn = document.createElement('button');
+        overwriteBtn.className = 'btn-primary';
+        overwriteBtn.textContent = '💾 上書き保存';
+        overwriteBtn.title = '今の編集内容でこのテンプレートを上書き保存します';
+        overwriteBtn.addEventListener('click', () => saveTemplate());
+      }
+
       const copyBtn = document.createElement('button');
       copyBtn.className = 'btn-outline';
       copyBtn.textContent = '📋 コピーして新規作成';
@@ -980,6 +993,7 @@ const Editor = (() => {
       });
 
       actions.appendChild(editBtn);
+      if (overwriteBtn) actions.appendChild(overwriteBtn);
       actions.appendChild(copyBtn);
       actions.appendChild(backupBtn);
       actions.appendChild(delBtn);
@@ -1101,6 +1115,7 @@ const Editor = (() => {
     editingTemplateId = template.id;
     nameInput.value = template.name;
     await loadFromArrayBuffer(originalArrayBuffer, template.name + '.pdf');
+    renderTemplateList(); // 一覧側の「上書き保存」ボタンを、今開いたこのテンプレートの項目にだけ表示させる
   }
 
   fileInput.addEventListener('change', async (e) => {
@@ -1112,6 +1127,7 @@ const Editor = (() => {
     pendingCopySourceId = null;
     await loadFromFile(file);
     if (copySourceId) applyCopiedFields(copySourceId);
+    renderTemplateList(); // 新規のPDFを読み込んだので、一覧側の「上書き保存」ボタンは消す
   });
 
   const newBtn = document.getElementById('editorNewBtn');

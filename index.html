@@ -82,6 +82,13 @@
 
     <div class="side-panel">
       <div class="panel">
+        <h2>テンプレートとして保存</h2>
+        <label style="font-size:12px;color:#6b7a90;">自治体名・様式名</label>
+        <input type="text" id="templateNameInput" placeholder="例：〇〇市 要介護認定申請書" style="width:100%;margin:6px 0 10px;">
+        <button class="btn-primary" id="saveTemplateBtn" style="width:100%;" disabled>💾 テンプレートを保存</button>
+        <div id="editorStatusMsg"></div>
+      </div>
+      <div class="panel">
         <h2>保存済みテンプレート</h2>
         <ul class="template-list" id="editorTemplateList"></ul>
         <p class="empty-note" id="editorTemplateEmpty">まだ保存されたテンプレートはありません</p>
@@ -147,13 +154,6 @@
             <button class="btn-primary" id="modalOkBtn">追加</button>
           </div>
         </div>
-      </div>
-      <div class="panel">
-        <h2>テンプレートとして保存</h2>
-        <label style="font-size:12px;color:#6b7a90;">自治体名・様式名</label>
-        <input type="text" id="templateNameInput" placeholder="例：〇〇市 要介護認定申請書" style="width:100%;margin:6px 0 10px;">
-        <button class="btn-primary" id="saveTemplateBtn" style="width:100%;" disabled>💾 テンプレートを保存</button>
-        <div id="editorStatusMsg"></div>
       </div>
       <div class="panel">
         <h2>このページの項目一覧</h2>
